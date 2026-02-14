@@ -23,7 +23,8 @@ COPY scripts/ ./scripts/
 
 RUN mkdir -p uploads
 
-# Non-secret defaults only; override with --env-file or platform variables
+# App reads all config from env (see app/core/config.py). Use --env-file .env when running.
+# Non-secret defaults only; override with --env-file or platform variables.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     MONGODB_DB_NAME=khaleeji \

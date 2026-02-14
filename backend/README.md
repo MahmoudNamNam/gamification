@@ -84,6 +84,41 @@ To seed when using Docker:
 docker compose exec api python -m scripts.seed
 ```
 
+## Docker image / production (Railway, EC2, etc.)
+
+When you run the backend as a **single container** (no MongoDB inside the container), you **must** set:
+
+- **`MONGODB_URI`** – MongoDB connection string (e.g. [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) `mongodb+srv://user:pass@cluster.mongodb.net/khaleeji`, or your host’s MongoDB URL).  
+  If this is not set, the app uses `mongodb://localhost:27017` and will fail with **Connection refused** in production.
+- **`JWT_SECRET`** – Use a strong secret in production.
+- **`CORS_ORIGINS`** – Comma-separated frontend origins (e.g. `https://your-app.com`).
+- **`PORT`** – Optional; defaults to 8000 (platforms like Railway often set this to 8080).
+
+Set these in your platform’s **Environment** / **.env** (e.g. Railway → your service → Variables).
+
+### Deploy on Railway
+
+1. **Source** – Connect repo `MahmoudNamNam/gamification`, branch `main`.
+2. **Root Directory** – Set to **`backend`** (Settings → Add Root Directory). So Railway builds and runs from the folder that contains `Dockerfile` and `app/`.
+3. **Build** – Leave default (Railway will use the `Dockerfile` in `backend/`). No custom build command needed.
+4. **Deploy** – Start command is from the Dockerfile (gunicorn). No override unless you need one.
+5. **Healthcheck Path** – Set to **`/health`** so deployments wait for the API to be up.
+6. **Variables** – In the service → **Variables**, add at least:
+   - `MONGODB_URI` (e.g. your MongoDB Atlas URI)
+   - `JWT_SECRET` (strong random string)
+   - `CORS_ORIGINS` (e.g. `*` or `https://your-frontend.railway.app`)
+   - Optionally: `MONGODB_DB_NAME`, `ENV`, `SMTP_*` if you use email.
+7. **Networking** – **Generate Domain** to get a public URL (e.g. `https://proactive-delight-production.up.railway.app`).
+
+Railway sets `PORT` (often 8080); the Dockerfile uses `PORT` automatically.
+
+**Run the image locally with your `.env`:**
+```bash
+docker build -t khaleeji-api .
+docker run --env-file .env -p 8000:8000 khaleeji-api
+```
+(Do not commit `.env`; the image does not include it.)
+
 ## Tests
 
 ```bash

@@ -12,3 +12,4 @@ raw-data/
 *.pyzwz
 .DS_Store
 .venv/
+.env

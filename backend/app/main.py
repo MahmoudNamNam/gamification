@@ -35,7 +35,17 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        from app.core.config import settings
+        uri = getattr(settings, "MONGODB_URI", "mongodb://localhost:27017")
+        if "27017" in uri and "localhost" in uri:
+            raise RuntimeError(
+                "MongoDB connection failed. In production/containers you must set MONGODB_URI "
+                "(e.g. MongoDB Atlas or your platform's MongoDB URL). Current value is default localhost."
+            ) from e
+        raise
 
 
 app.include_router(auth.router)
