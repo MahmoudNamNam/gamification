@@ -1,0 +1,597 @@
+{
+  "info": {
+    "name": "خليجي (Khaleeji) API",
+    "description": "Gulf-themed quiz game backend.\n\nVariables: base_url, access_token (set after login/register), match_id, category_id, question_id, round_no, product_id, purchase_id, user_id, otp.\n\nRegistration: POST /auth/register (name, email, password) → OTP by email → POST /auth/verify-otp/register (email, otp) → token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "match_id", "value": "" },
+    { "key": "category_id", "value": "" },
+    { "key": "question_id", "value": "" },
+    { "key": "product_id", "value": "" },
+    { "key": "purchase_id", "value": "" },
+    { "key": "user_id", "value": "" },
+    { "key": "otp", "value": "" },
+    { "key": "round_no", "value": "1" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health",
+            "description": "No auth. Returns { \"status\": \"ok\" }."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (name, email, password)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo User\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"your-password\"\n}"
+            },
+            "url": "{{base_url}}/auth/register",
+            "description": "Step 1: Submit full name, email, password. OTP sent to email. Then call \"Verify OTP (register)\" with email + otp to get token."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP (register)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"otp\": \"{{otp}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/verify-otp/register",
+            "description": "Step 2: Enter OTP received by email. Returns access_token. Save to access_token variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"your-password\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Returns access_token."
+          },
+          "response": []
+        },
+        {
+          "name": "Request OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"purpose\": \"login\"\n}"
+            },
+            "url": "{{base_url}}/auth/request-otp",
+            "description": "purpose: register | login | forgot_password. OTP sent by email (SMTP). Dev: RETURN_OTP_IN_RESPONSE=true to get otp in response."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP (login)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"otp\": \"{{otp}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/verify-otp/login",
+            "description": "Passwordless login. Returns access_token."
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\"\n}"
+            },
+            "url": "{{base_url}}/auth/forgot-password",
+            "description": "Sends instructions to email (stub). Use request-otp (forgot_password) + verify-otp/forgot-password for OTP reset."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP (forgot password)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"otp\": \"{{otp}}\",\n  \"new_password\": \"newsecret123\",\n  \"new_password_confirm\": \"newsecret123\"\n}"
+            },
+            "url": "{{base_url}}/auth/verify-otp/forgot-password",
+            "description": "After request-otp with purpose=forgot_password. Returns access_token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get me",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/me",
+            "description": "Current user profile. Requires Bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "Update me",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Name\"\n}"
+            },
+            "url": "{{base_url}}/me",
+            "description": "Update name and/or favorite_category_ids."
+          },
+          "response": []
+        },
+        {
+          "name": "Set favorite categories",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_ids\": [\"{{category_id}}\"]\n}"
+            },
+            "url": "{{base_url}}/me/favorite-categories",
+            "description": "Replaces favorite category list. Max 20. Use empty array to clear."
+          },
+          "response": []
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users?skip=0&limit=100",
+            "description": "List users (auth required)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users/{{user_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            },
+            "url": "{{base_url}}/users/{{user_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/users/{{user_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/categories?active_only=true",
+            "description": "No auth. Set a category id in variable for other requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Get category",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/categories/{{category_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name_ar\": \"الرياضة\",\n  \"name_en\": \"Sports\",\n  \"icon_url\": null,\n  \"active\": true,\n  \"order\": 1\n}"
+            },
+            "url": "{{base_url}}/categories"
+          },
+          "response": []
+        },
+        {
+          "name": "Update category",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name_en\": \"Sports & Fitness\"\n}"
+            },
+            "url": "{{base_url}}/categories/{{category_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete category",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/categories/{{category_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "item": [
+        {
+          "name": "Create match",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selected_category_ids\": [\"{{category_id}}\"],\n  \"teamA_name\": \"Team Alpha\",\n  \"teamB_name\": \"Team Beta\",\n  \"timer_seconds\": 10\n}"
+            },
+            "url": "{{base_url}}/matches",
+            "description": "Max 6 categories. Save response id to match_id."
+          },
+          "response": []
+        },
+        {
+          "name": "List matches",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/matches?status=active&skip=0&limit=100"
+          },
+          "response": []
+        },
+        {
+          "name": "Get match",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/matches/{{match_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Next question",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": \"{{category_id}}\",\n  \"level\": 1\n}"
+            },
+            "url": "{{base_url}}/matches/{{match_id}}/next-question",
+            "description": "level: 1 | 2 | 3. Max 2 questions per category per level."
+          },
+          "response": []
+        },
+        {
+          "name": "Get round hint",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/matches/{{match_id}}/rounds/{{round_no}}/hint",
+            "description": "Get hint for a round's question. Match owner only. Set round_no from next-question response."
+          },
+          "response": []
+        },
+        {
+          "name": "Get round answer",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/matches/{{match_id}}/rounds/{{round_no}}/answer",
+            "description": "Get answer for a round's question. Match owner only."
+          },
+          "response": []
+        },
+        {
+          "name": "Judge round",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"round_no\": 1,\n  \"judge_selection\": \"TEAM_A\"\n}"
+            },
+            "url": "{{base_url}}/matches/{{match_id}}/judge",
+            "description": "judge_selection: TEAM_A | TEAM_B | NO_ONE"
+          },
+          "response": []
+        },
+        {
+          "name": "Finish match",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/matches/{{match_id}}/finish",
+            "description": "Returns scores, winner, summary."
+          },
+          "response": []
+        },
+        {
+          "name": "Patch teams",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teamA_name\": \"Alpha\",\n  \"teamB_name\": \"Beta\"\n}"
+            },
+            "url": "{{base_url}}/matches/{{match_id}}/teams"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete match",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/matches/{{match_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Questions",
+      "item": [
+        {
+          "name": "Create question",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": \"{{category_id}}\",\n  \"level\": 1,\n  \"points\": 100,\n  \"prompt\": { \"text\": \"ما عاصمة الإمارات؟\", \"media\": null },\n  \"hint\": { \"enabled\": false, \"content\": null },\n  \"status\": \"active\"\n}"
+            },
+            "url": "{{base_url}}/admin/questions"
+          },
+          "response": []
+        },
+        {
+          "name": "List questions",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/questions?category_id=&level=1&status=active&skip=0&limit=100",
+            "description": "Filters: category_id, level (1|2|3), status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get question",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/questions/{{question_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Get question hint",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/questions/{{question_id}}/hint",
+            "description": "Returns hint (enabled + content) for the question."
+          },
+          "response": []
+        },
+        {
+          "name": "Get question answer",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/questions/{{question_id}}/answer",
+            "description": "Returns answer for the question."
+          },
+          "response": []
+        },
+        {
+          "name": "Update question",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": "{{base_url}}/admin/questions/{{question_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete question",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/questions/{{question_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get wallet",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wallet",
+            "description": "Rounds balance, free round used, subscription."
+          },
+          "response": []
+        },
+        {
+          "name": "Purchase round pack",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{product_id}}\",\n  \"rounds\": 5\n}"
+            },
+            "url": "{{base_url}}/purchases/round-pack"
+          },
+          "response": []
+        },
+        {
+          "name": "Consume round",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/wallet/consume-round",
+            "description": "Decrement rounds (e.g. when starting a match without free round)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/products?active_only=true",
+            "description": "No auth. Save product_id for purchase."
+          },
+          "response": []
+        },
+        {
+          "name": "Get product",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/products/{{product_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name_ar\": \"حزمة 5 جولات\",\n  \"name_en\": \"5 Rounds Pack\",\n  \"type\": \"rounds\",\n  \"rounds\": 5,\n  \"price_display\": \"مجاني\",\n  \"active\": true\n}"
+            },
+            "url": "{{base_url}}/products"
+          },
+          "response": []
+        },
+        {
+          "name": "Update product",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}"
+            },
+            "url": "{{base_url}}/products/{{product_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete product",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/products/{{product_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Purchases",
+      "item": [
+        {
+          "name": "List purchases",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/purchases?skip=0&limit=100"
+          },
+          "response": []
+        },
+        {
+          "name": "Get purchase",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/purchases/{{purchase_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete purchase",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/purchases/{{purchase_id}}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "question.schema.json",
+  "title": "Question schemas",
+  "definitions": {
+    "MediaBlock": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "enum": ["url", "gridfs", "bindata", "base64"], "default": "url" },
+        "url": { "type": ["string", "null"] },
+        "gridfs_file_id": { "type": ["string", "null"] },
+        "base64": { "type": ["string", "null"] },
+        "mime": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "PromptBlock": {
+      "type": "object",
+      "description": "Text and/or media for prompt or hint content.",
+      "properties": {
+        "text": { "type": ["string", "null"] },
+        "media": { "oneOf": [{ "$ref": "#/definitions/MediaBlock" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "QuestionHint": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "content": { "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "Question": {
+      "type": "object",
+      "required": ["category_id", "level", "points", "prompt"],
+      "properties": {
+        "id": { "type": ["string", "null"], "description": "MongoDB ObjectId (24-char hex)" },
+        "category_id": { "type": "string", "description": "MongoDB ObjectId (24-char hex)" },
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "points": { "type": "integer", "enum": [100, 200, 500] },
+        "prompt": { "$ref": "#/definitions/PromptBlock" },
+        "hint": { "$ref": "#/definitions/QuestionHint" },
+        "status": { "type": "string", "enum": ["active", "draft", "archived"], "default": "active" },
+        "created_at": { "type": ["string", "null"], "format": "date-time" },
+        "updated_at": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "QuestionCreate": {
+      "type": "object",
+      "required": ["category_id", "level", "points", "prompt"],
+      "properties": {
+        "category_id": { "type": "string" },
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "points": { "type": "integer", "enum": [100, 200, 500] },
+        "prompt": { "$ref": "#/definitions/PromptBlock" },
+        "hint": { "$ref": "#/definitions/QuestionHint" },
+        "status": { "type": "string", "enum": ["active", "draft", "archived"], "default": "active" }
+      },
+      "additionalProperties": false
+    },
+    "QuestionUpdate": {
+      "type": "object",
+      "properties": {
+        "category_id": { "type": ["string", "null"] },
+        "level": { "oneOf": [{ "type": "integer", "enum": [1, 2, 3] }, { "type": "null" }] },
+        "points": { "oneOf": [{ "type": "integer", "enum": [100, 200, 500] }, { "type": "null" }] },
+        "prompt": { "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }] },
+        "hint": { "oneOf": [{ "$ref": "#/definitions/QuestionHint" }, { "type": "null" }] },
+        "status": { "oneOf": [{ "type": "string", "enum": ["active", "draft", "archived"] }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "GameQuestionResponse": {
+      "type": "object",
+      "required": ["id", "prompt", "hint_available"],
+      "properties": {
+        "id": { "type": "string" },
+        "prompt": { "$ref": "#/definitions/PromptBlock" },
+        "hint_available": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

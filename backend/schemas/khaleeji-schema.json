@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "khaleeji-schema.json",
+  "title": "Khaleeji API schemas",
+  "description": "Q (question prompt), Hint, and Answer each have text and media (both optional).",
+  "definitions": {
+    "MediaBlock": {
+      "type": "object",
+      "description": "Image or other media. Use kind: url with url, or kind: gridfs with gridfs_file_id, or kind: base64 with base64.",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["url", "gridfs", "bindata", "base64"],
+          "default": "url"
+        },
+        "url": { "type": ["string", "null"] },
+        "gridfs_file_id": { "type": ["string", "null"] },
+        "base64": { "type": ["string", "null"] },
+        "mime": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "PromptBlock": {
+      "type": "object",
+      "description": "Block with text and media (each optional). Used for Q (question), Hint, and Answer — every one of them has both text and media fields; you can set one or both.",
+      "properties": {
+        "text": { "type": ["string", "null"], "description": "Optional text." },
+        "media": {
+          "oneOf": [{ "$ref": "#/definitions/MediaBlock" }, { "type": "null" }],
+          "description": "Optional image or other media."
+        }
+      },
+      "additionalProperties": false
+    },
+    "QuestionHint": {
+      "type": "object",
+      "description": "Hint has text and media (each optional), same shape as PromptBlock.",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "content": {
+          "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }],
+          "description": "Hint content: text and media (each optional)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Question": {
+      "type": "object",
+      "description": "Q (prompt), Hint, and Answer each have text and media (each optional).",
+      "required": ["category_id", "level", "points", "prompt"],
+      "properties": {
+        "id": { "type": ["string", "null"], "description": "MongoDB ObjectId (24-char hex)" },
+        "category_id": { "type": "string", "description": "MongoDB ObjectId (24-char hex)" },
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "points": { "type": "integer", "enum": [100, 200, 500] },
+        "prompt": {
+          "$ref": "#/definitions/PromptBlock",
+          "description": "Q: text and media (each optional)."
+        },
+        "hint": {
+          "$ref": "#/definitions/QuestionHint",
+          "description": "Hint: text and media (each optional)."
+        },
+        "answer": {
+          "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }],
+          "description": "Answer: text and media (each optional)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "draft", "archived"],
+          "default": "active"
+        },
+        "created_at": { "type": ["string", "null"], "format": "date-time" },
+        "updated_at": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "QuestionCreate": {
+      "type": "object",
+      "required": ["category_id", "level", "points", "prompt"],
+      "properties": {
+        "category_id": { "type": "string" },
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "points": { "type": "integer", "enum": [100, 200, 500] },
+        "prompt": { "$ref": "#/definitions/PromptBlock" },
+        "hint": { "$ref": "#/definitions/QuestionHint" },
+        "answer": {
+          "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "draft", "archived"],
+          "default": "active"
+        }
+      },
+      "additionalProperties": false
+    },
+    "QuestionUpdate": {
+      "type": "object",
+      "properties": {
+        "category_id": { "type": ["string", "null"] },
+        "level": { "oneOf": [{ "type": "integer", "enum": [1, 2, 3] }, { "type": "null" }] },
+        "points": { "oneOf": [{ "type": "integer", "enum": [100, 200, 500] }, { "type": "null" }] },
+        "prompt": { "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }] },
+        "hint": { "oneOf": [{ "$ref": "#/definitions/QuestionHint" }, { "type": "null" }] },
+        "answer": { "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }] },
+        "status": {
+          "oneOf": [
+            { "type": "string", "enum": ["active", "draft", "archived"] },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "GameQuestionResponse": {
+      "type": "object",
+      "description": "Question payload for next-question response.",
+      "required": ["id", "prompt", "hint_available"],
+      "properties": {
+        "id": { "type": "string" },
+        "prompt": { "$ref": "#/definitions/PromptBlock" },
+        "hint_available": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "TeamInfo": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "default": "" },
+        "avatar_key": { "type": ["string", "null"] },
+        "score": { "type": "integer", "default": 0 }
+      },
+      "additionalProperties": false
+    },
+    "LevelSetting": {
+      "type": "object",
+      "properties": {
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "points": { "type": "integer" },
+        "questions_per_level": { "type": "integer", "default": 2 }
+      },
+      "additionalProperties": false
+    },
+    "MatchSettings": {
+      "type": "object",
+      "properties": {
+        "timer_seconds": { "type": "integer", "default": 10 },
+        "max_categories": { "type": "integer", "default": 6 },
+        "levels": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/LevelSetting" }
+        },
+        "allow_negative_points": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "MatchRound": {
+      "type": "object",
+      "properties": {
+        "round_no": { "type": "integer" },
+        "category_id": { "type": ["string", "null"] },
+        "level": { "oneOf": [{ "type": "integer", "enum": [1, 2, 3] }, { "type": "null" }] },
+        "points": { "type": "integer", "default": 0 },
+        "question_id": { "type": ["string", "null"] },
+        "judge_selection": {
+          "oneOf": [
+            { "type": "string", "enum": ["TEAM_A", "TEAM_B", "NO_ONE"] },
+            { "type": "null" }
+          ]
+        },
+        "scored_team": {
+          "oneOf": [
+            { "type": "string", "enum": ["A", "B"] },
+            { "type": "null" }
+          ]
+        },
+        "scored_points": { "type": "integer", "default": 0 },
+        "created_at": { "type": ["string", "null"], "format": "date-time" },
+        "answer": {
+          "oneOf": [{ "$ref": "#/definitions/PromptBlock" }, { "type": "null" }],
+          "description": "Question answer (in match response)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CategoryLevelUsage": {
+      "type": "object",
+      "properties": {
+        "category_id": { "type": "string" },
+        "level": { "type": "integer", "enum": [1, 2, 3] },
+        "used_question_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Match": {
+      "type": "object",
+      "required": ["created_by_user_id", "selected_category_ids"],
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "created_by_user_id": { "type": "string" },
+        "mode": { "type": "string", "enum": ["team", "solo"], "default": "team" },
+        "status": {
+          "type": "string",
+          "enum": ["active", "finished", "abandoned"],
+          "default": "active"
+        },
+        "selected_category_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "maxItems": 6
+        },
+        "teams": {
+          "type": "object",
+          "properties": {
+            "A": { "$ref": "#/definitions/TeamInfo" },
+            "B": { "$ref": "#/definitions/TeamInfo" }
+          },
+          "additionalProperties": false
+        },
+        "settings": { "$ref": "#/definitions/MatchSettings" },
+        "progress": {
+          "type": "object",
+          "properties": {
+            "usage": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/CategoryLevelUsage" }
+            }
+          },
+          "additionalProperties": true
+        },
+        "rounds": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MatchRound" }
+        },
+        "finished_at": { "type": ["string", "null"], "format": "date-time" },
+        "created_at": { "type": ["string", "null"], "format": "date-time" },
+        "updated_at": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "CreateMatchRequest": {
+      "type": "object",
+      "required": ["selected_category_ids"],
+      "properties": {
+        "selected_category_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "teamA_name": { "type": "string", "default": "" },
+        "teamB_name": { "type": "string", "default": "" },
+        "timer_seconds": { "type": ["integer", "null"], "minimum": 1, "maximum": 300 }
+      },
+      "additionalProperties": false
+    },
+    "NextQuestionRequest": {
+      "type": "object",
+      "required": ["category_id", "level"],
+      "properties": {
+        "category_id": { "type": "string" },
+        "level": { "type": "integer", "enum": [1, 2, 3] }
+      },
+      "additionalProperties": false
+    },
+    "JudgeRequest": {
+      "type": "object",
+      "required": ["round_no", "judge_selection"],
+      "properties": {
+        "round_no": { "type": "integer" },
+        "judge_selection": { "type": "string", "enum": ["TEAM_A", "TEAM_B", "NO_ONE"] }
+      },
+      "additionalProperties": false
+    },
+    "ApiError": {
+      "type": "object",
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" },
+            "details": { "type": "object" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
